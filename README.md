@@ -1,81 +1,74 @@
-### README for
-`flan_t5_x_imdb.py
-`
-#### **Description:**
-This script fine-tunes the FLAN-T5 model on the IMDB dataset for sentiment
-classification.
-#### **How to Run:**
-1. Install the necessary libraries:
-pip install transformers datasets torch
-2. Load the IMDB dataset and preprocess it for sentiment analysis.
-3. Fine-tune the FLAN-T5 model using the training loop or a HuggingFace Trainer.
-4. Evaluate the model on the test set and save the trained model.
-### README for
-`
-gsm8k_x_flan_t5.py
-`
-#### **Description:**
-This script fine-tunes the FLAN-T5 model on the GSM8K dataset for solving math
-word problems.
-#### **How to Run:**
-1. Install the required libraries:
-pip install transformers datasets torch
-2. Load the GSM8K dataset and preprocess the math questions and answers.
-3. Fine-tune the FLAN-T5 model and monitor training metrics.
-4. Save the trained model after the training loop completes.
-### README for
-`
-quantization_flan_t5_base_x_gsm8k.py
-`
-#### **Description:**
-This script applies dynamic quantization to the fine-tuned FLAN-T5 model trained
-on the GSM8K dataset.
-#### **How to Run:**
-1. Install the necessary libraries:
-pip install transformers datasets torch
-2. Load the best model checkpoint from training on the GSM8K dataset.
-3. Apply dynamic quantization to reduce model size.
-4. Evaluate the quantized model and compare performance with the original.
-### README for
-`
-quantization_flan_t5_base_x_imdb.py
-`
-#### **Description:**
-This script quantizes the FLAN-T5 model fine-tuned on the IMDB dataset for
-sentiment classification.
-#### **How to Run:**
-1. Install the necessary libraries:
-pip install transformers datasets torch
-2. Load the pre-trained model checkpoint from the IMDB fine-tuning.
-3. Apply dynamic quantization to reduce model size.
-4. Evaluate the quantized model's performance and save the results.
-### README for
-`
-quantized_flan_t5_x_samsum.py
-`
-#### **Description:**
-This script applies dynamic quantization to the FLAN-T5 model fine-tuned on the
-SAMsum dataset for dialogue summarization.
-#### **How to Run:**
-1. Install the necessary libraries:
-pip install transformers datasets torch rouge-score
-2. Load the SAMsum dataset and preprocess the dialogues.
-3. Quantize the FLAN-T5 model and evaluate its performance on the validation set.
-4. Save the quantized model for deployment.
-### README for
-`
-samsum_x_flan_t5_base.py
-`
-#### **Description:**
-This script fine-tunes the FLAN-T5 model on the SAMsum dataset for dialogue
-summarization tasks.
-#### **How to Run:**
-1. Install the necessary libraries:
-pip install transformers datasets torch
-2. Load and preprocess the SAMsum dataset.
-3. Fine-tune the FLAN-T5 model and monitor training metrics.
-4. Save the trained model checkpoint after completing training.
-You can copy and paste the respective README for each script into separate
-files. Let me know if you need any further adjustments!
-`
-.txt`
+# LLM Quantization on NLP Tasks
+
+Research project exploring the impact of **dynamic INT8 quantization** on FLAN-T5-base across three NLP tasks: sentiment classification, math problem solving, and dialogue summarization.
+
+## Overview
+
+The project fine-tunes [google/flan-t5-base](https://huggingface.co/google/flan-t5-base) on each task, then applies `torch.quantization.quantize_dynamic` to compress the model and evaluates the trade-off between model size and task performance.
+
+## Repository Structure
+
+```
+├── FLAN_T5_x_IMDB.ipynb                    # Fine-tune FLAN-T5 on IMDB sentiment
+├── Quantization_FLAN_T5_Base_x_IMDB.ipynb  # Quantize and evaluate on IMDB
+├── GSM8K_x_FLAN_T5.ipynb                   # Fine-tune FLAN-T5 on GSM8K math
+├── Quantization_FLAN_T5_Base_x_GSM8K.ipynb # Quantize and evaluate on GSM8K
+├── SAMsum_x_FLAN_T5_base.ipynb             # Fine-tune FLAN-T5 on SAMsum dialogue
+├── Quantized_FLAN_T5_x_SAMsum.ipynb        # Quantize and evaluate on SAMsum
+├── utils.py                                 # Shared utilities (seeds, checkpointing, metrics)
+├── requirements.txt                         # Python dependencies
+└── Dissertation Thesis.pdf                  # Full research write-up
+```
+
+## Tasks
+
+| Task | Dataset | Metric | Notebook |
+|------|---------|--------|----------|
+| Sentiment Classification | [IMDB](https://huggingface.co/datasets/imdb) | Accuracy, Loss | `FLAN_T5_x_IMDB.ipynb` |
+| Math Problem Solving | [GSM8K](https://huggingface.co/datasets/gsm8k) | Loss | `GSM8K_x_FLAN_T5.ipynb` |
+| Dialogue Summarization | [SAMsum](https://huggingface.co/datasets/samsum) | ROUGE-1/2/L, Loss | `SAMsum_x_FLAN_T5_base.ipynb` |
+
+## Quantization Results
+
+| Task | Original Size | Quantized Size | Size Reduction | Performance Impact |
+|------|--------------|----------------|----------------|-------------------|
+| IMDB | ~990 MB | ~99 MB | ~90% | Accuracy: 94.66% → ~94.6% |
+| GSM8K | ~990 MB | ~99 MB | ~90% | See dissertation for details |
+| SAMsum | ~990 MB | ~99 MB | ~90% | See dissertation for details |
+
+Quantization method: `torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)`
+
+## Setup
+
+### Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Google Colab
+
+These notebooks are designed to run on Google Colab with GPU acceleration.
+
+1. Mount Google Drive and set your model checkpoint directory:
+   ```python
+   from google.colab import drive
+   drive.mount('/content/drive')
+
+   # Update this path to match your Drive structure
+   DRIVE_BASE = '/content/drive/MyDrive/LLM Models'
+   ```
+
+2. Upload `utils.py` to your Colab session or copy it to Drive and import it.
+
+3. Run the fine-tuning notebook for a task before running the corresponding quantization notebook — the quantization notebooks load checkpoints saved during fine-tuning.
+
+## Training Configuration
+
+| Hyperparameter | IMDB | GSM8K | SAMsum |
+|---------------|------|-------|--------|
+| Learning rate | 1e-5 | 5e-5 | 1e-4 |
+| Batch size (train) | 32 | 8 | 16 |
+| Epochs | 10 | 10 | 10 |
+| Early stopping | No | patience=3 | No |
+| Warmup | 10% of steps | 10% of steps | 10% of steps |
